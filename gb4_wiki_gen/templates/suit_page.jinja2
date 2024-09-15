@@ -1,0 +1,184 @@
+[%- macro includeonly_icon(section_name) -%]
+<section begin="[=section_name]" />
+[[File:GB4_[=SUIT_SLUG].png|left|frameless]]
+[[[=PAGE_URI]]]
+<section end="[=section_name]" />
+[%- endmacro -%]
+<includeonly>
+[= includeonly_icon("HEAD_ICON") ]
+[= includeonly_icon("BODY_ICON") ]
+[= includeonly_icon("ARML_ICON") ]
+[= includeonly_icon("ARMR_ICON") ]
+[= includeonly_icon("LEGS_ICON") ]
+</includeonly>
+
+= [=SUIT_NAME] - [=SUIT_NUMBER] =
+{{GB4SuitInfo
+|NAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
+|MAIN_IMAGE=Main image
+|SERIES=[=SERIES]
+|GRADE_HG=[=GRADE_HG]
+|GRADE_MG=[=GRADE_MG]
+|GRADE_SD=[=GRADE_SD]
+|IN_SHOP=[=IN_SHOP]
+|DERIVE_ONLY=[=DERIVE_ONLY]
+|SHOP_PRICE_HG=[=SHOP_PRICE_HG]
+|SHOP_PRICE_SD=[=SHOP_PRICE_SD]
+|SHOP_PRICE_MG=[=SHOP_PRICE_Mg]
+}}
+[=DESCRIPTION]
+
+=== Part list ===
+{| class="wikitable"
+|+
+!Part
+!EX Skill
+!OP Skill
+!Awaken Skill
+[% for icon, part_skills in PARTS %]
+|-
+| rowspan="1" | [=icon]
+|[% for skill in part_skills | selectattr("is_ex_skill") %]
+'''[=skill.name]'''
+[=skill.info]
+[% else -%]
+n/a
+[%- endfor %]
+|[% for skill in part_skills | selectattr("is_op_skill") %]
+'''[=skill.name]'''
+[=skill.info]
+[% else -%]
+n/a
+[%- endfor %]
+|[% for skill in part_skills | selectattr("is_awaken_skill") %]
+'''[=skill.name]'''
+[=skill.info]
+[% else -%]
+n/a
+[%- endfor %]
+[% endfor %]
+|}
+
+=== Drops ===
+
+==== Example Quest Mission 01 - Newtype ====
+How to get drop, is it a guaranteed mission result, special conditions and strategies to achieve the special conditions.
+
+==== Example Quest Mission 02 - Casual ====
+How to get drop, is it a guaranteed mission result, special conditions and strategies to achieve the special conditions.
+
+==== Example Quest Mission 03 - Hardcore ====
+How to get drop, is it a guaranteed mission result, special conditions and strategies to achieve the special conditions.
+
+=== Derives from ===
+{| class="wikitable"
+|+
+!Part
+!Derive Unit
+!Material Unit
+|-
+| rowspan="1" |{{GB4PartHead}}
+|
+|{{#lst:Project:ReferenceLinkTestPage|HEAD_ICON}}
+|-
+| rowspan="1" |{{GB4PartBody}}
+|Name of part linked to kit page
+|Name of part linked to kit page
+|-
+| rowspan="1" |{{GB4PartArmL}}
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |{{GB4PartArmR}}
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |{{GB4PartLegs}}
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |{{GB4PartBackpack}}
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |{{GB4PartShield}}
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Melee 1 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Melee 2 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Ranged 1 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Ranged 2 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|}
+
+=== Derives into===
+''DRAFT NOTE:'' What this table will show is a result part, made from this kit's part and one other. There will be potentially many result parts, so this table should have a different setup that the "Derives from" table. Since Derives always take one base part, and one material part, and the base part on this page is always going to be of the kit, there's not really a reason to list it again as "derive part".
+{| class="wikitable"
+|+
+!Part
+!Result
+!Material Unit
+|-
+| rowspan="1" |{{GB4PartHead}}
+|First result part linked to kit page
+|Name of part linked to kit page
+|-
+|
+|Second result part linked to kit page
+|Name of part linked to kit page
+|-
+|
+|Third result part linked to kit page
+|Name of part linked to kit page
+|-
+| rowspan="1" |{{GB4PartBody}}
+|Name of part linked to kit page
+|Name of part linked to kit page
+|-
+| rowspan="1" |*Left Arm Icon*
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Right Arm Icon*
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Legs Icon*
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Backpack Icon*
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Shield Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Melee 1 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Melee 2 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Ranged 1 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|-
+| rowspan="1" |*Ranged 2 Icon* (Can you even derive this? Remove if not)
+|*Objetive Unit Icon*
+|*Unit 1 Icon* + *Unit 2 Icon*
+|}
