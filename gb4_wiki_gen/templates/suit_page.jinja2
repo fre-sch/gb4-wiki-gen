@@ -13,7 +13,7 @@
 </includeonly>
 
 = [=SUIT_NAME] - [=SUIT_NUMBER] =
-{{GB4SuitInfo
+{{GB4KitInfo
 |NAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
 |MAIN_IMAGE=Main image
 |SERIES=[=SERIES]
@@ -37,27 +37,53 @@
 !Awaken Skill
 [% for icon, part_skills in PARTS %]
 |-
-| rowspan="1" | [=icon]
-|[% for skill in part_skills | selectattr("is_ex_skill") %]
-'''[=skill.name]'''
-[=skill.info]
-[% else -%]
-n/a
-[%- endfor %]
-|[% for skill in part_skills | selectattr("is_op_skill") %]
-'''[=skill.name]'''
-[=skill.info]
-[% else -%]
-n/a
-[%- endfor %]
-|[% for skill in part_skills | selectattr("is_awaken_skill") %]
-'''[=skill.name]'''
-[=skill.info]
-[% else -%]
-n/a
-[%- endfor %]
+| [% if part_skills %]rowspan="[=part_skills|length]" | [% endif %]{{GB4Part[=icon]}}
+[% for ex, op, awaken in part_skills %]
+[% if loop.index > 1 %]|-[% endif %]
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=ex.info][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=ex.info][% endif %]
+[% else %]
+|
+|
+|
+[% endfor %]
 [% endfor %]
 |}
+
+==== Equipment ====
+{| class="wikitable"
+|+
+!Part
+!Normal Skill
+!EX Skill
+!OP Skill
+!Awaken Skill
+[% for icon, name, part_skills in EQUIP | select() %]
+|-
+| [% if part_skills %]rowspan="[=part_skills|length]" | [% endif %]{{GB4Equip[=icon]}} [=name]
+[% for normal, ex, op, awaken in part_skills %]
+[% if loop.index > 1 %]|-[% endif %]
+| [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
+[=normal.info][% endif %]
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=ex.info][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=ex.info][% endif %]
+[% else %]
+|
+|
+|
+[% endfor %]
+[% endfor %]
+|}
+
+
 
 === Drops ===
 
