@@ -6,98 +6,93 @@ import argparse
 
 from models import DataTable, BaseRowType, \
     DataMSList, DataItemGunplaBox, DataPartsParameter, DataSkillIdInfoData, \
-    DataEquipParameter
+    DataEquipParameter, MissionRewardTable
 
-data_sources = (
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_ability_cartridge_name.json"),
+data_sources = {
+    "GB4/Content/Text/en/Common/localized_text_ability_cartridge_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_ability_cartridge_info.json"),
+    "GB4/Content/Text/en/Common/localized_text_ability_cartridge_info.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_preset_character_name.json"),
+    "GB4/Content/Text/en/Common/localized_text_preset_character_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_ms_number.json"),
+    "GB4/Content/Text/en/Common/localized_text_ms_number.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_skill_info.json"),
+    "GB4/Content/Text/en/Common/localized_text_skill_info.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_skill_name.json"),
+    "GB4/Content/Text/en/Common/localized_text_skill_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_parts_name.json"),
+    "GB4/Content/Text/en/Common/localized_text_parts_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_weapon_name.json"),
+    "GB4/Content/Text/en/Common/localized_text_weapon_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Text/en/Common/localized_text_shield_name.json"),
+    "GB4/Content/Text/en/Common/localized_text_shield_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/AbilityCartridge.json"),
+    "GB4/Content/Text/en/Common/localized_text_bparts_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/AbilityInfo.json"),
+    "GB4/Content/Text/en/Menu/localized_text_story_title_name.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/AbilityPerformance.json"),
+    "GB4/Content/Data/MS/AbilityCartridge.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/EquipAttachParameter.json"),
+    "GB4/Content/Data/MS/AbilityInfo.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/EquipParameter.json"),
+    "GB4/Content/Data/MS/AbilityPerformance.json": (
+        BaseRowType,
+    ),
+    "GB4/Content/Data/MS/EquipAttachParameter.json": (
+        BaseRowType,
+    ),
+    "GB4/Content/Data/MS/EquipParameter.json": (
         DataEquipParameter,
     ),
-    (
-        Path("GB4/Content/Data/MS/EquipPerformance.json"),
+    "GB4/Content/Data/MS/EquipPerformance.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/MSList.json"),
+    "GB4/Content/Data/MS/MSList.json": (
         DataMSList,
     ),
-    (
-        Path("GB4/Content/Data/MS/PartsIdList.json"),
+    "GB4/Content/Data/MS/PartsIdList.json": (
         BaseRowType,
     ),
-    (
-        Path("GB4/Content/Data/MS/PartsParameter.json"),
+    "GB4/Content/Data/MS/PartsParameter.json": (
         DataPartsParameter,
     ),
-    (
-        Path("GB4/Content/Data/Item/ItemGunplaBox.json"),
+    "GB4/Content/Data/Item/ItemGunplaBox.json": (
         DataItemGunplaBox,
     ),
-    (
-        Path("GB4/Content/Data/Skill/SkillIdInfo.json"),
+    "GB4/Content/Data/Skill/SkillIdInfo.json": (
         DataSkillIdInfoData,
+    ),
+    "GB4/Content/Data/Item/ItemDrop/MissionRewardTable.json": (
+        BaseRowType, MissionRewardTable
     )
-)
+}
 
 
 def load_data(dir_path) -> Mapping[str, DataTable]:
     registry = dict()
-    for path, row_type in data_sources:
-        with open(dir_path / path, "r", encoding="utf8") as fp:
+    for path, types in data_sources.items():
+        match types:
+            case (row_type,):
+                table_type = DataTable
+            case (row_type, table_type,):
+                pass
+
+        with open(Path(dir_path) / path, "r", encoding="utf8") as fp:
             raw = json.load(fp)
-            DataTable(registry, row_type, raw[0])
+            table_type(registry, row_type, raw[0])
     return registry
 
 

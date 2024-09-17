@@ -1,4 +1,7 @@
+import re
+from contextlib import suppress
 from pathlib import Path
+from pprint import pprint
 
 from gb4_wiki_gen.templates import template_env
 from gb4_wiki_gen.database import load_from_args, load_data
@@ -6,7 +9,7 @@ from slugify import slugify
 from itertools import zip_longest
 import click
 
-from models import DataPartsParameter, DataEquipParameter
+from models import DataPartsParameter, DataEquipParameter, DataTableIndexError
 
 
 def make_skill_data(part_param: DataPartsParameter):
@@ -77,6 +80,51 @@ def main(context, dir_path):
 
 
 @main.command()
+@click.pass_context
+def mission_rewards(context):
+    registry = context.obj["registry"]
+    mission_reward_table = registry["MissionRewardTable"]
+    suit_names = registry["localized_text_preset_character_name"]
+    bpart_names = registry["localized_text_bparts_name"]
+    part_names = registry["localized_text_parts_name"]
+    weapon_names = registry["localized_text_weapon_name"]
+    shield_names = registry["localized_text_shield_name"]
+    story_names = registry["localized_text_story_title_name"]
+
+    def get_reward_name(reward_id):
+        with suppress(Exception):
+            return suit_names[reward_id]._text
+        with suppress(Exception):
+            return part_names[reward_id]._text
+        with suppress(Exception):
+            return weapon_names[reward_id]._text
+        with suppress(Exception):
+            return shield_names[reward_id]._text
+        with suppress(Exception):
+            return bpart_names[reward_id]._text
+        return reward_id
+
+    def get_mission_name(mission_reward_id: str) -> str:
+        try:
+            story_name_key = mission_reward_id.replace("MissionReward", "TextId")
+            return story_names[story_name_key]._text
+        except DataTableIndexError:
+            return mission_reward_id
+
+    print("= Mission Rewards =")
+    for reward_id, mission_list in mission_reward_table.reward_item_mapped.items():
+        reward_name = str(get_reward_name(reward_id)).replace("\n", " ")
+
+        print(f"== {reward_name} ==")
+        for mission_id in mission_list:
+            mission_name = get_mission_name(mission_id)
+            if mission_name == mission_id:
+                print(f"* {mission_name}")
+            else:
+                print(f"* '''{mission_name}''' ")
+
+
+@main.command()
 @click.argument("suit_id", type=str)
 @click.pass_context
 def suit(context, suit_id):
@@ -87,6 +135,14 @@ def suit(context, suit_id):
     # MG_1540
     suit = mslist[suit_id]
     suit_slug = slugify(suit.ms_name_localized._text, separator="_")
+
+    suit_parts = (
+        suit.head, suit.body, suit.arm_l, suit.arm_r, suit.leg, suit.backpack,
+        suit.equip0, suit.equip1, suit.equip2, suit.equip3, suit.equip4,
+        suit.equip5, suit.equip6, suit.equip7
+    )
+    # for sp in suit_parts:
+    #     missions = mission_reward_table.mission_by_reward_item(sp)
 
     print(template.render(
         SUIT_NAME=suit.ms_name_localized._text,

@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Mapping
 
@@ -88,33 +89,76 @@ class DataTable:
         self.registry = registry
         registry[self.data["Name"]] = self
 
+    @property
+    def rows(self) -> dict:
+        return self.data["Rows"]
+
     def keys(self):
-        return self.data["Rows"].keys()
+        return self.rows.keys()
 
     def __contains__(self, key):
-        return key in self.data["Rows"]
+        return key in self.rows
 
     def __getitem__(self, key):
         try:
-            return self.row_type(self.registry, self.data["Rows"][key], key)
+            return self.row_type(self.registry, self.rows[key], key)
         except KeyError as e:
             raise DataTableIndexError(self.data["Name"], key) from None
 
     def __iter__(self):
         return iter(
             self.row_type(self.registry, it, key)
-            for key, it in self.data["Rows"].items()
+            for key, it in self.rows.items()
         )
 
     def get(self, id):
-        row = self.data["Rows"].get(id)
+        row = self.rows.get(id)
         if row is None:
             return
         return self.row_type(self.registry, row, id)
 
 
+class MissionRewardTable(DataTable):
+    def __init__(self, registry, row_type, data):
+        super().__init__(registry, row_type, data)
+        self.init_rows(data)
+        self.init_reward_item_mapped()
+
+    def init_rows(self, data):
+        self._rows = {}
+        for key, item in data["Rows"].items():
+            is_graded = re.match("(.+?)_?([ABCDS])$", key)
+            if is_graded:
+                mission_key = is_graded.group(1)
+                clear_grade = {"_ClearGrade": is_graded.group(2)}
+            else:
+                mission_key = key
+                clear_grade = {}
+            for reward_item in item["_RewardItemInfoArray"]:
+                mission_row = self._rows.setdefault(mission_key, [])
+                mission_row.append({
+                    **reward_item,
+                    **clear_grade,
+                })
+
+    def init_reward_item_mapped(self):
+        self.reward_item_mapped = {}
+        for mission_key, mission_rewards in self._rows.items():
+            for mission_reward in mission_rewards:
+                reward_item_id = mission_reward["_RewardItemId"]
+                missions = self.reward_item_mapped.setdefault(reward_item_id, [])
+                missions.append(mission_key)
+
+    @property
+    def rows(self) -> dict:
+        return self._rows
+
+    def mission_by_reward_item(self, item_id) -> list:
+        self.reward_item_mapped.get(item_id, [])
+
+
 class BaseRowType:
-    def __init__(self, registry, data, id_):
+    def __init__(self, registry, data, id):
         self.registry = registry
         self.data = data
         self.id = id
@@ -145,7 +189,10 @@ class UField:
     def __get__(self, obj, obj_type=None):
         if obj is None:
             return None
-        return obj.data[self._attr]
+        value = obj.data[self._attr]
+        if value == "None":
+            return None
+        return value
 
 
 @dataclass(frozen=True)
@@ -160,6 +207,14 @@ class DataMSList:
     arm_l: UField = UField("_armL")
     leg: UField = UField("_leg")
     backpack: UField = UField("_backpack")
+    equip0: UField = UField("_equip0")
+    equip1: UField = UField("_equip1")
+    equip2: UField = UField("_equip2")
+    equip3: UField = UField("_equip3")
+    equip4: UField = UField("_equip4")
+    equip5: UField = UField("_equip5")
+    equip6: UField = UField("_equip6")
+    equip7: UField = UField("_equip7")
 
     ms_number_localized: UReference = UReference(attr="id", table="localized_text_ms_number")
     ms_name_localized: UReference = UReference(attr="id", table="localized_text_preset_character_name")
@@ -187,14 +242,6 @@ class DataMSList:
     equip6_params: UReference = UReference(attr="_equip6", table="EquipParameter")
     equip7_params: UReference = UReference(attr="_equip7", table="EquipParameter")
 
-    equip0_localized: UReference = UReference(attr="_equip0", table="localized_text_weapon_name")
-    equip1_localized: UReference = UReference(attr="_equip1", table="localized_text_weapon_name")
-    equip2_localized: UReference = UReference(attr="_equip2", table="localized_text_weapon_name")
-    equip3_localized: UReference = UReference(attr="_equip3", table="localized_text_weapon_name")
-    equip4_localized: UReference = UReference(attr="_equip4", table="localized_text_weapon_name")
-    equip5_localized: UReference = UReference(attr="_equip5", table="localized_text_weapon_name")
-    equip6_localized: UReference = UReference(attr="_equip6", table="localized_text_weapon_name")
-    equip7_localized: UReference = UReference(attr="_equip7", table="localized_text_weapon_name")
 
 
 
