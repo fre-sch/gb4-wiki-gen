@@ -118,6 +118,103 @@ class DataTable:
         return self.row_type(self.registry, row, id)
 
 
+class MSListTable(DataTable):
+    def __init__(self, registry, row_type, data):
+        super().__init__(registry, row_type, data)
+        self.init_suit_id_by_part_id()
+        self.init_primary_suit_by_part_id()
+
+    def init_suit_id_by_part_id(self):
+        """
+        prepares lookup of suit_ids via part_id
+        some parts are shared between suits
+        """
+        self._suit_id_by_part_id = {}
+        for item_id, part_id in self.parts_ids_iter:
+            self._suit_id_by_part_id.setdefault(part_id, []).append(item_id)
+
+    def init_primary_suit_by_part_id(self):
+        """
+        some parts are shared between suits, stores which suit is considered the
+        primary suit based on part_id digits
+        """
+        self._primary_suit_by_part_id = {}
+        for item_id, part_id in self.parts_ids_iter:
+            suits = self.suits_by_part_id(part_id)
+            if len(suits) == 1:
+                self._primary_suit_by_part_id[part_id] = suits[0]
+            else:
+                for suit in suits:
+                    if part_id is not None and part_id[:-1] in suit.id:
+                        self._primary_suit_by_part_id[part_id] = suit
+                        break
+
+    @property
+    def parts_ids_iter(self):
+        for item in self:
+            for part_id in item.parts_ids:
+                yield item.id, part_id
+
+    def primary_suit_by_part_id(self, part) -> "DataMSList":
+        try:
+            part_id = part.id
+        except Exception:
+            part_id = part
+        return self._primary_suit_by_part_id[part_id]
+
+    def suits_by_part_id(self, part) -> list["DataMSList"]:
+        try:
+            part_id = part.id
+        except Exception:
+            part_id = part
+        suit_ids = self._suit_id_by_part_id[part_id]
+        return [self[suit_id] for suit_id in suit_ids]
+
+    def grade_variants(self, suit) -> tuple[bool, bool, bool]:
+        try:
+            suit_id = suit.id
+        except Exception:
+            suit_id = suit
+        gradeless_id = suit_id[3:]
+        hg = f"HG_{gradeless_id}" in self
+        mg = f"MG_{gradeless_id}" in self
+        sd = f"SD_{gradeless_id}" in self
+        return hg, mg, sd
+
+
+class DerivedSynthesizeParameterTable(DataTable):
+    def __init__(self, registry, row_type, data):
+        super().__init__(registry, row_type, data)
+        self.init_implicit_recipes_from_parts_sharing()
+
+    def init_implicit_recipes_from_parts_sharing(self):
+        mslist = self.registry["MSList"]
+        self._recipes = []
+
+        for item in self:
+            if item.target_parts_id not in mslist:
+                continue
+            suit = mslist[item.target_parts_id]
+
+            for array_item in item.synthesize_recipe_array:
+                parts_recipes = zip(
+                    suit.parts_ids,
+                    mslist[array_item["_SrcPartsId1"]].parts_ids,
+                    mslist[array_item["_SrcPartsId2"]].parts_ids,
+                )
+                self._recipes.extend(filter(
+                    lambda it: it[0] != it[1] != it[2],
+                    parts_recipes
+                ))
+
+    def find_derives_into(self, part_id):
+        result = []
+        for t, s1, s2 in self._recipes:
+            if s1 == part_id or s2 == part_id:
+                result.append((t, s1, s2))
+        return result
+
+
 class MissionRewardTable(DataTable):
     def __init__(self, registry, row_type, data):
         super().__init__(registry, row_type, data)
@@ -242,7 +339,25 @@ class DataMSList:
     equip6_params: UReference = UReference(attr="_equip6", table="EquipParameter")
     equip7_params: UReference = UReference(attr="_equip7", table="EquipParameter")
 
+    synthesis: UReference = UReference(attr="id", table="DerivedSynthesizeParameter")
 
+    @property
+    def parts_ids(self):
+        return (self.head, self.body, self.arm_r, self.arm_l, self.leg, self.backpack)
+
+    @property
+    def parts_params(self):
+        return (
+            ("head", self.head_part_params),
+            ("body", self.body_part_params),
+            ("arm_r", self.arm_r_part_params),
+            ("arm_l", self.arm_l_part_params),
+            ("leg", self.leg_part_params),
+            ("backpack", self.backpack_part_params),
+        )
+
+    def has_part(self, part_id):
+        return part_id in self.parts_ids
 
 
 @dataclass(frozen=True)
@@ -282,7 +397,7 @@ class DataPartsParameter:
     ability_array: UField = UField()
     other: UField = UField()
 
-    parts_name_localized: UReference = UReference(attr="_PartsName", table="localized_text_weapon_name")
+    parts_name_localized: UReference = UReference(attr="_PartsName", table="localized_text_parts_name")
     skill_array_data: UReferenceObjectArray = UReferenceObjectArray(
         attr=("_SkillArray", "_SkillId"), table="SkillIdInfo")
 

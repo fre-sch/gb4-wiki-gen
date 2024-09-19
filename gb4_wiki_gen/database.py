@@ -6,7 +6,8 @@ import argparse
 
 from models import DataTable, BaseRowType, \
     DataMSList, DataItemGunplaBox, DataPartsParameter, DataSkillIdInfoData, \
-    DataEquipParameter, MissionRewardTable
+    DataEquipParameter, MissionRewardTable, MSListTable, \
+    DerivedSynthesizeParameterTable
 
 data_sources = {
     "GB4/Content/Text/en/Common/localized_text_ability_cartridge_name.json": (
@@ -61,7 +62,7 @@ data_sources = {
         BaseRowType,
     ),
     "GB4/Content/Data/MS/MSList.json": (
-        DataMSList,
+        DataMSList, MSListTable
     ),
     "GB4/Content/Data/MS/PartsIdList.json": (
         BaseRowType,
@@ -77,7 +78,13 @@ data_sources = {
     ),
     "GB4/Content/Data/Item/ItemDrop/MissionRewardTable.json": (
         BaseRowType, MissionRewardTable
-    )
+    ),
+    "GB4/Content/Data/Mission/MissionListTable.json": (
+        BaseRowType,
+    ),
+    "GB4/Content/Data/Synthesize/DerivedSynthesizeParameter.json": (
+        BaseRowType, DerivedSynthesizeParameterTable
+    ),
 }
 
 
