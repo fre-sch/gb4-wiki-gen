@@ -2,7 +2,8 @@ from itertools import zip_longest
 
 from slugify import slugify
 
-from models import DataTableIndexError, DataEquipParameter, DataPartsParameter
+from models import DataTableIndexError, DataEquipParameter, DataPartsParameter, \
+    DataMSList
 
 
 def make_skill_data(part_param: DataPartsParameter):
@@ -17,14 +18,14 @@ def make_skill_data(part_param: DataPartsParameter):
             "info": skill_data.info_localized._text,
             "ability_type": ability_type
         }
-        if "EX" in ability_type:
+        if "ORIGINAL" in ability_type:
+            awaken_skills.append(item)
+
+        elif "EX" in ability_type:
             ex_skills.append(item)
 
         elif "OP" in ability_type:
             op_skills.append(item)
-
-        elif skill_data.hyper_trance_id != "None":
-            awaken_skills.append(item)
 
     return list(zip_longest(ex_skills, op_skills, awaken_skills, fillvalue=None))
 
@@ -68,40 +69,51 @@ def make_derive_from_data(suit):
         suit.synthesis
     except DataTableIndexError as e:
         return []
+
     mslist = suit.registry["MSList"]
-    synthesis_recipes = []
-
-    for item in suit.synthesis.synthesize_recipe_array:
-        base = mslist[item["_SrcPartsId1"]].ms_name_localized._text
-        material = mslist[item["_SrcPartsId2"]].ms_name_localized._text
-
-        synthesis_recipes.append({
-            "base_name": base,
-            "base_page_uri": slugify(base),
-            "material_name": material,
-            "material_page_uri": slugify(material)
-        })
-    return synthesis_recipes
-
-
-def make_derive_into_data(suit):
-    mslist = suit.registry["MSList"]
+    part_param_table = suit.registry["PartsParameter"]
     synthesis_table = suit.registry["DerivedSynthesizeParameter"]
-    synthesis_recipes = []
-    for item in synthesis_table:
-        for recipe in item.synthesize_recipe_array:
-            if suit.id in (recipe["_SrcPartsId1"], recipe["_SrcPartsId2"]):
-                try:
-                    result = mslist[item.target_parts_id].ms_name_localized._text
-                    material_id = recipe["_SrcPartsId1"] if recipe["_SrcPartsId2"] == suit.id else recipe["_SrcPartsId2"]
-                    material = mslist[material_id].ms_name_localized._text
-                    synthesis_recipes.append({
-                        "result_name": result,
-                        "result_page_uri": slugify(result),
-                        "material_name": material,
-                        "material_page_uri": slugify(material)
-                    })
-                except DataTableIndexError as e:
-                    print(e)
-                    pass
-    return synthesis_recipes
+    recipes = {}
+
+    for part_id in suit.non_shared_parts_ids:
+        for result_id, source1_id, source2_id in synthesis_table.find_derives_from(part_id):
+            part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
+            recipes.setdefault(part_type, []).append(
+                {
+                    "result_part_name": part_param_table[result_id].parts_name_localized._text,
+                    "result_suit_name": mslist.primary_suit_by_part_id(result_id).ms_name_localized._text,
+                    "source1_part_name": part_param_table[source1_id].parts_name_localized._text,
+                    "source1_suit_name": mslist.primary_suit_by_part_id(source1_id).ms_name_localized._text,
+                    "source2_part_name": part_param_table[source2_id].parts_name_localized._text,
+                    "source2_suit_name": mslist.primary_suit_by_part_id(source2_id).ms_name_localized._text
+                }
+            )
+    return recipes
+
+
+def make_derive_into_data(suit: DataMSList):
+    mslist = suit.registry["MSList"]
+    part_param_table = suit.registry["PartsParameter"]
+    synthesis_table = suit.registry["DerivedSynthesizeParameter"]
+    recipes = {}
+
+    for part_id in suit.non_shared_parts_ids:
+        for result_id, source1_id, source2_id in synthesis_table.find_derives_into(part_id):
+            part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
+            if source1_id == part_id:
+                base_id = source1_id
+                material_id = source2_id
+            else:
+                base_id = source2_id
+                material_id = source1_id
+            recipes.setdefault(part_type, []).append(
+                {
+                    "result_part_name": part_param_table[result_id].parts_name_localized._text,
+                    "result_suit_name": mslist.primary_suit_by_part_id(result_id).ms_name_localized._text,
+                    "base_part_name": part_param_table[base_id].parts_name_localized._text,
+                    "base_suit_name": mslist.primary_suit_by_part_id(base_id).ms_name_localized._text,
+                    "material_part_name": part_param_table[material_id].parts_name_localized._text,
+                    "material_suit_name": mslist.primary_suit_by_part_id(material_id).ms_name_localized._text
+                }
+            )
+    return recipes

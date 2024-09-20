@@ -202,16 +202,25 @@ class DerivedSynthesizeParameterTable(DataTable):
                     mslist[array_item["_SrcPartsId1"]].parts_ids,
                     mslist[array_item["_SrcPartsId2"]].parts_ids,
                 )
+                # looking up the actual parts will generate (invalid) recipes
+                # where parts are shared between suits, exclude those
                 self._recipes.extend(filter(
                     lambda it: it[0] != it[1] != it[2],
                     parts_recipes
                 ))
 
+    def find_derives_from(self, part_id):
+        result = set()
+        for target, source1, source2 in self._recipes:
+            if target == part_id:
+                result.add((target, source1, source2))
+        return result
+
     def find_derives_into(self, part_id):
-        result = []
-        for t, s1, s2 in self._recipes:
-            if s1 == part_id or s2 == part_id:
-                result.append((t, s1, s2))
+        result = set()
+        for target, source1, source2 in self._recipes:
+            if source1 == part_id or source2 == part_id:
+                result.add((target, source1, source2))
         return result
 
 
@@ -344,6 +353,15 @@ class DataMSList:
     @property
     def parts_ids(self):
         return (self.head, self.body, self.arm_r, self.arm_l, self.leg, self.backpack)
+
+    @property
+    def non_shared_parts_ids(self):
+        mstable = self.registry["MSList"]
+        return [
+            part_id
+            for part_id in self.parts_ids
+            if mstable.primary_suit_by_part_id(part_id).id == self.id
+        ]
 
     @property
     def parts_params(self):

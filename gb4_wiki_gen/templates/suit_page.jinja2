@@ -1,15 +1,10 @@
 <includeonly>
-[[
-[=PAGE_URI]
-|
-[[File:GB4_Icon_[=SUIT_SLUG].png|left|frameless]]
-[=SUIT_NAME] - [=SUIT_NUMBER]
-]]
+[[ File:GB4_Icon_[=SUIT_NAME|slugify].png|left|frameless]] [[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] - [=SUIT_NUMBER] ]]
 </includeonly>
 <noinclude>
 = [=SUIT_NAME] - [=SUIT_NUMBER] =
 {{GB4KitInfo
-|NAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
+|KITNAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
 |MAIN_IMAGE=Main image
 |SERIES=[=SERIES]
 |GRADE_HG=[=GRADE_HG]
@@ -40,9 +35,9 @@
 | [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
 [=ex.info][% endif %]
 | [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
-[=ex.info][% endif %]
+[=op.info][% endif %]
 | [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
-[=ex.info][% endif %]
+[=awaken.info][% endif %]
 [% else %]
 |
 |
@@ -86,32 +81,43 @@
 
 
 === Derives from ===
+
+Both Unit 1 and Unit 2 can be used as base part to start the derive synthesis.
+
 {| class="wikitable"
 |+
-!Base Unit
-!Material Unit
-[%- for recipe in DERIVE_FROM %]
+!Part type
+!Remodel Unit
+!Unit 1
+!Unit 2
+[%- for part_type, recipes in DERIVE_FROM.items() %]
 |-
-| [[GB4:[= recipe.base_page_uri ]|[= recipe.base_name ]]]
-| [[GB4:[= recipe.material_page_uri ]|[= recipe.material_name ]]]
-[% else %]
-|
-|
-[% endfor %]
+| rowspan=[=recipes|length + 1] | {{GB4Part[=part_type]}}
+[%- for recipe in recipes %]
+|-
+| {{ [=WIKI_NAMESPACE]:[=recipe.result_suit_name | slugify] }}
+| {{ [=WIKI_NAMESPACE]:[=recipe.source1_suit_name | slugify] }}
+| {{ [=WIKI_NAMESPACE]:[=recipe.source2_suit_name | slugify] }}
+[%- endfor %]
+[%- endfor %]
 |}
 
-=== Derives into===
+=== Derives into ===
 {| class="wikitable"
 |+
-!Result Unit
+!Part type
+!Base Unit
+!Remodel Unit
 !Material Unit
-[%- for recipe in DERIVE_INTO %]
+[%- for part_type, recipes in DERIVE_INTO.items() %]
 |-
-| [[GB4:[= recipe.result_page_uri ]|[= recipe.result_name ]]]
-| [[GB4:[= recipe.material_page_uri ]|[= recipe.material_name ]]]
-[% else %]
-|
-|
-[% endfor %]
+| rowspan=[=recipes|length + 1] | {{GB4Part[=part_type]}}
+[%- for recipe in recipes %]
+|-
+| {{ [=WIKI_NAMESPACE]:[=recipe.base_suit_name | slugify] }}
+| {{ [=WIKI_NAMESPACE]:[=recipe.result_suit_name | slugify] }}
+| {{ [=WIKI_NAMESPACE]:[=recipe.material_suit_name | slugify] }}
+[%- endfor %]
+[%- endfor %]
 |}
 </noinclude>

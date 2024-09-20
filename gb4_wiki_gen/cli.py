@@ -10,6 +10,7 @@ import click
 from generator.suit_page import make_derive_into_data, make_derive_from_data, \
     make_equip_data, make_skill_data
 from models import DataTableIndexError
+from wiki_client import ApiSession
 
 
 @click.group()
@@ -100,21 +101,25 @@ def mission_rewards(context):
 
 @main.command()
 @click.argument("suit_id", type=str)
+@click.option("--upload", type=bool, default=False)
+@click.option("--username", type=str)
+@click.option("--password", type=str)
 @click.pass_context
-def suit(context, suit_id):
+def suit(context, suit_id, upload, username, password):
+    if not suit_id:
+        return
+
     registry = context.obj["registry"]
     template = template_env.get_template("suit_page.jinja2")
     mslist = registry["MSList"]
-    # HG_1790
-    # MG_1540
     suit = mslist[suit_id]
-    suit_slug = slugify(suit.ms_name_localized._text, separator="_")
-
-    print(template.render(
+    wiki_namespace="Generated"
+    page_slug = slugify(suit.ms_name_localized._text, separator="_")
+    page_title = f"{wiki_namespace}:{page_slug}"
+    page_content = template.render(
+        WIKI_NAMESPACE=wiki_namespace,
         SUIT_NAME=suit.ms_name_localized._text,
         SUIT_NUMBER=suit.ms_number_localized._text,
-        SUIT_SLUG=suit_slug,
-        PAGE_URI=f"GB4:{suit_slug}",
         PARTS=[
             ("Head", suit.head_part_params.parts_name_localized._text, make_skill_data(suit.head_part_params)),
             ("Body", suit.body_part_params.parts_name_localized._text, make_skill_data(suit.body_part_params)),
@@ -135,7 +140,16 @@ def suit(context, suit_id):
         ],
         DERIVE_FROM=make_derive_from_data(suit),
         DERIVE_INTO=make_derive_into_data(suit),
-    ))
+    )
+    if upload and username and password:
+        wiki_client = ApiSession("https://gundambreaker.miraheze.org/w/")
+        wiki_client.bot_login(username, password)
+        csrf_token = wiki_client.csrf_token()
+        response = wiki_client.edit(csrf_token, page_title, page_content)
+        print(page_title)
+    else:
+        print(page_content)
+
 
 
 if __name__ == "__main__":

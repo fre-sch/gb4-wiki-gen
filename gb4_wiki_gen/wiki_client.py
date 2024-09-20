@@ -6,9 +6,13 @@ class ApiSession(requests.Session):
     def __init__(self, base_url=None):
         super().__init__()
         self.base_url = base_url
+        self.headers["User-Agent"] = "fre-sch.github.gb4_wiki_gen"
 
     def request(self, method, url, *args, **kwargs):
-        joined_url = urljoin(self.base_url, url)
+        if "https://" in url:
+            joined_url = url
+        else:
+            joined_url = urljoin(self.base_url, url)
         return super().request(method, joined_url, *args, **kwargs)
 
     # additional api methods
@@ -25,17 +29,19 @@ class ApiSession(requests.Session):
                 }
             }
         """
-        querystring = {
+        request_data = {
             "action": "query",
-            "format": "json",
             "meta": "tokens",
+            "format": "json",
             "type": "login",
         }
         response = self.get(
             "api.php",
-            params=querystring,
+            params=request_data,
         )
-        response.raise_for_status()
+        if response.status_code != 200:
+            print(response.text)
+            response.raise_for_status()
         response_data = response.json()
         return response_data["query"]["tokens"]["logintoken"]
 
@@ -47,6 +53,7 @@ class ApiSession(requests.Session):
             "lgtoken": login_token,
             "lgname": username,
             "lgpassword": password,
+            "lgdomain": "gundambreaker.miraheze.org"
         }
         response = self.post(
             "api.php",
@@ -74,7 +81,26 @@ class ApiSession(requests.Session):
             "format": "json",
             "meta": "tokens"
         }
-        response = self.get("api.php", params=request_data)
+        request = requests.Request(
+            method="get",
+            url=self.base_url+"/api.php",
+            params=request_data
+        )
+        prep_req = self.prepare_request(request)
+        #response = self.get("api.php", params=request_data)
+        response = self.send(prep_req)
         response.raise_for_status()
         response_data = response.json()
-        return response_data["query"]["csrftoken"]
+        return response_data["query"]["tokens"]["csrftoken"]
+
+    def edit(self, csrf_token, title, text, summary="Page edit via API"):
+        request_data = {
+            "action": "edit",
+            "token": csrf_token,
+            "title": title,
+            "text": text,
+            "summary": summary
+        }
+        response = self.post("api.php", data=request_data)
+        response.raise_for_status()
+        return response
