@@ -1,12 +1,14 @@
 <includeonly>
-[[ File:GB4_Icon_[=SUIT_NAME|slugify].png|left|frameless]] [[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] - [=SUIT_NUMBER] ]]
+<div class="gb4-unit-icon">
+[[ File:GB4_Icon_[=SUIT_NAME|slugify].png|left|frameless]] <span>[[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] ]]</span>
+</div>
 </includeonly>
 <noinclude>
 = [=SUIT_NAME] - [=SUIT_NUMBER] =
 {{GB4KitInfo
 |KITNAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
 |MAIN_IMAGE=Main image
-|SERIES=[=SERIES]
+|SERIES_NAME={{GB4Series_[=SERIES|slugify]}}
 |GRADE_HG=[=GRADE_HG]
 |GRADE_MG=[=GRADE_MG]
 |GRADE_SD=[=GRADE_SD]
@@ -19,35 +21,31 @@
 [=DESCRIPTION]
 
 
-=== Part list ===
-
+== Part list ==
+[% for icon, part_name, part_skills in PARTS %]
+=== [=icon] ===
+[=part_name]
+[% if part_skills %]
 {| class="wikitable"
 |+
-!Part
 !EX Skill
 !OP Skill
 !Awaken Skill
-[%- for icon, part_name, part_skills in PARTS %]
-|-
-| [% if part_skills %]rowspan="[=part_skills|length]" | [% endif %]{{GB4Part[=icon]}} [=part_name]
 [%- for ex, op, awaken in part_skills %]
-[%- if loop.index > 1 %]|-[% endif %]
+|-
 | [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
 [=ex.info][% endif %]
 | [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
 [=op.info][% endif %]
 | [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
 [=awaken.info][% endif %]
-[% else %]
-|
-|
-|
-[%- endfor %]
 [%- endfor %]
 |}
+[% endif %]
+[%- endfor %]
 
 
-==== Equipment ====
+== Equipment ==
 
 {| class="wikitable"
 |+
@@ -77,47 +75,47 @@
 [%- endfor %]
 |}
 
-=== Drops ===
+== Drops ==
 
 
-=== Derives from ===
+== Derives from ==
 
 Both Unit 1 and Unit 2 can be used as base part to start the derive synthesis.
 
+[%- for part_type, recipes in DERIVE_FROM.items() %]
+=== [=part_type] ===
 {| class="wikitable"
 |+
-!Part type
 !Remodel Unit
 !Unit 1
 !Unit 2
-[%- for part_type, recipes in DERIVE_FROM.items() %]
-|-
-| rowspan=[=recipes|length + 1] | {{GB4Part[=part_type]}}
 [%- for recipe in recipes %]
 |-
 | {{ [=WIKI_NAMESPACE]:[=recipe.result_suit_name | slugify] }}
 | {{ [=WIKI_NAMESPACE]:[=recipe.source1_suit_name | slugify] }}
 | {{ [=WIKI_NAMESPACE]:[=recipe.source2_suit_name | slugify] }}
 [%- endfor %]
-[%- endfor %]
 |}
+[%- endfor %]
 
-=== Derives into ===
+== Derives into ==
+
+[%- for part_type, recipes in DERIVE_INTO.items() %]
+=== [=part_type] ===
 {| class="wikitable"
 |+
-!Part type
 !Base Unit
 !Remodel Unit
 !Material Unit
-[%- for part_type, recipes in DERIVE_INTO.items() %]
-|-
-| rowspan=[=recipes|length + 1] | {{GB4Part[=part_type]}}
 [%- for recipe in recipes %]
 |-
 | {{ [=WIKI_NAMESPACE]:[=recipe.base_suit_name | slugify] }}
 | {{ [=WIKI_NAMESPACE]:[=recipe.result_suit_name | slugify] }}
 | {{ [=WIKI_NAMESPACE]:[=recipe.material_suit_name | slugify] }}
 [%- endfor %]
-[%- endfor %]
 |}
+[% endfor %]
+
+[[Category:Gundam Breaker 4]]
+[[Category:[=SERIES]]]
 </noinclude>

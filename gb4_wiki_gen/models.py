@@ -377,6 +377,20 @@ class DataMSList:
     def has_part(self, part_id):
         return part_id in self.parts_ids
 
+    @property
+    def series_localized(self):
+        parts_parameter_table = self.registry["PartsParameter"]
+        localized_series_table = self.registry["localized_text_gundam_series"]
+        non_shared_parts = [
+            parts_parameter_table[part_id]
+            for part_id in self.non_shared_parts_ids
+        ]
+        series = set([
+            localized_series_table[part.series]._text
+            for part in non_shared_parts
+        ])
+        return next(iter(series), None)
+
 
 @dataclass(frozen=True)
 class DataItemGunplaBox:
@@ -418,6 +432,10 @@ class DataPartsParameter:
     parts_name_localized: UReference = UReference(attr="_PartsName", table="localized_text_parts_name")
     skill_array_data: UReferenceObjectArray = UReferenceObjectArray(
         attr=("_SkillArray", "_SkillId"), table="SkillIdInfo")
+
+    @property
+    def series(self):
+        return self.other["_GundamSeriesName"]
 
 
 @dataclass(frozen=True)

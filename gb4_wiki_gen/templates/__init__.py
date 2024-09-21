@@ -13,4 +13,4 @@ template_env = jinja2.Environment(
     comment_start_string="[#",
     comment_end_string="#]",
 )
-template_env.filters["slugify"] = partial(slugify, separator="_")
+template_env.filters["slugify"] = partial(slugify, separator="_", lowercase=False)

@@ -40,6 +40,9 @@ data_sources = {
     "GB4/Content/Text/en/Common/localized_text_bparts_name.json": (
         BaseRowType,
     ),
+    "GB4/Content/Text/en/Common/localized_text_gundam_series.json": (
+        BaseRowType
+    ),
     "GB4/Content/Text/en/Menu/localized_text_story_title_name.json": (
         BaseRowType,
     ),

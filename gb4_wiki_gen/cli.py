@@ -1,16 +1,17 @@
+import logging
 from contextlib import suppress
 from pathlib import Path
 from pprint import pprint
 
-from gb4_wiki_gen.templates import template_env
 from gb4_wiki_gen.database import load_data
-from slugify import slugify
 import click
 
-from generator.suit_page import make_derive_into_data, make_derive_from_data, \
-    make_equip_data, make_skill_data
+from generator.suit_page import make_suit_page_content
 from models import DataTableIndexError
 from wiki_client import ApiSession
+
+
+log = logging.getLogger(__name__)
 
 
 @click.group()
@@ -100,57 +101,48 @@ def mission_rewards(context):
 
 
 @main.command()
-@click.argument("suit_id", type=str)
+@click.argument("suit_id", type=str, nargs=-1)
 @click.option("--upload", type=bool, default=False)
 @click.option("--username", type=str)
 @click.option("--password", type=str)
+@click.option("--wiki-namespace", type=str, default="Generated")
 @click.pass_context
-def suit(context, suit_id, upload, username, password):
+def suit(context, suit_id, upload, username, password, wiki_namespace):
     if not suit_id:
         return
 
+    suit_ids = []
+    for it in suit_id:
+        suit_ids.extend(it.split(" "))
+
+
+    def try_make_suit_pages(registry, suit_id, wiki_namespace):
+        for suit_id in suit_ids:
+            try:
+                yield make_suit_page_content(registry, suit_id, wiki_namespace)
+            except DataTableIndexError as e:
+                log.exception("failed making suit page")
+            except Exception:
+                log.exception("failed making suit page")
+
     registry = context.obj["registry"]
-    template = template_env.get_template("suit_page.jinja2")
-    mslist = registry["MSList"]
-    suit = mslist[suit_id]
-    wiki_namespace="Generated"
-    page_slug = slugify(suit.ms_name_localized._text, separator="_")
-    page_title = f"{wiki_namespace}:{page_slug}"
-    page_content = template.render(
-        WIKI_NAMESPACE=wiki_namespace,
-        SUIT_NAME=suit.ms_name_localized._text,
-        SUIT_NUMBER=suit.ms_number_localized._text,
-        PARTS=[
-            ("Head", suit.head_part_params.parts_name_localized._text, make_skill_data(suit.head_part_params)),
-            ("Body", suit.body_part_params.parts_name_localized._text, make_skill_data(suit.body_part_params)),
-            ("ArmR", suit.arm_r_part_params.parts_name_localized._text, make_skill_data(suit.arm_r_part_params)),
-            ("ArmL", suit.arm_l_part_params.parts_name_localized._text, make_skill_data(suit.arm_l_part_params)),
-            ("Leg", suit.leg_part_params.parts_name_localized._text, make_skill_data(suit.leg_part_params)),
-            ("Backpack", suit.backpack_part_params.parts_name_localized._text, make_skill_data(suit.backpack_part_params)),
-        ],
-        EQUIP=[
-            make_equip_data(suit.equip0_params),
-            make_equip_data(suit.equip1_params),
-            make_equip_data(suit.equip2_params),
-            make_equip_data(suit.equip3_params),
-            make_equip_data(suit.equip4_params),
-            make_equip_data(suit.equip5_params),
-            make_equip_data(suit.equip6_params),
-            make_equip_data(suit.equip7_params),
-        ],
-        DERIVE_FROM=make_derive_from_data(suit),
-        DERIVE_INTO=make_derive_into_data(suit),
-    )
-    if upload and username and password:
+    pages = list(try_make_suit_pages(registry, suit_id, wiki_namespace))
+
+    if pages and upload and username and password:
         wiki_client = ApiSession("https://gundambreaker.miraheze.org/w/")
         wiki_client.bot_login(username, password)
         csrf_token = wiki_client.csrf_token()
-        response = wiki_client.edit(csrf_token, page_title, page_content)
-        print(page_title)
+        for page_title, page_content in pages:
+            wiki_client.edit(csrf_token, page_title, page_content)
+            log.info(f"Upload okay: {page_title}")
     else:
-        print(page_content)
-
+        for page_title, page_content in pages:
+            log.info(page_content)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(levelname)s %(name)s %(message)s"
+    )
     main()

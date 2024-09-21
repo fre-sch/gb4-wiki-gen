@@ -4,6 +4,7 @@ from slugify import slugify
 
 from models import DataTableIndexError, DataEquipParameter, DataPartsParameter, \
     DataMSList
+from templates import template_env
 
 
 def make_skill_data(part_param: DataPartsParameter):
@@ -76,6 +77,7 @@ def make_derive_from_data(suit):
     recipes = {}
 
     for part_id in suit.non_shared_parts_ids:
+        part_id = part_id.replace("MG_", "HG_")
         for result_id, source1_id, source2_id in synthesis_table.find_derives_from(part_id):
             part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
             recipes.setdefault(part_type, []).append(
@@ -98,6 +100,7 @@ def make_derive_into_data(suit: DataMSList):
     recipes = {}
 
     for part_id in suit.non_shared_parts_ids:
+        part_id = part_id.replace("MG_", "HG_")
         for result_id, source1_id, source2_id in synthesis_table.find_derives_into(part_id):
             part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
             if source1_id == part_id:
@@ -117,3 +120,48 @@ def make_derive_into_data(suit: DataMSList):
                 }
             )
     return recipes
+
+
+def make_suit_page_content(registry, suit_id, wiki_namespace):
+    template = template_env.get_template("suit_page.jinja2")
+    mslist = registry["MSList"]
+    suit = mslist[suit_id]
+    page_slug = slugify(suit.ms_name_localized._text, separator="_", lowercase=False)
+    page_title = f"{wiki_namespace}:{page_slug}"
+    grade_hg, grade_mg, grade_sd = mslist.grade_variants(suit)
+    page_content = template.render(
+        WIKI_NAMESPACE=wiki_namespace,
+        SUIT_NAME=suit.ms_name_localized._text,
+        SUIT_NUMBER=suit.ms_number_localized._text,
+        SERIES=suit.series_localized,
+        GRADE_HG="HG" if grade_hg else "",
+        GRADE_MG="MG" if grade_mg else "",
+        GRADE_SD="SD" if grade_sd else "",
+        PARTS=[
+            ("Head", suit.head_part_params.parts_name_localized._text,
+             make_skill_data(suit.head_part_params)),
+            ("Body", suit.body_part_params.parts_name_localized._text,
+             make_skill_data(suit.body_part_params)),
+            ("ArmR", suit.arm_r_part_params.parts_name_localized._text,
+             make_skill_data(suit.arm_r_part_params)),
+            ("ArmL", suit.arm_l_part_params.parts_name_localized._text,
+             make_skill_data(suit.arm_l_part_params)),
+            ("Leg", suit.leg_part_params.parts_name_localized._text,
+             make_skill_data(suit.leg_part_params)),
+            ("Backpack", suit.backpack_part_params.parts_name_localized._text,
+             make_skill_data(suit.backpack_part_params)),
+        ],
+        EQUIP=[
+            make_equip_data(suit.equip0_params),
+            make_equip_data(suit.equip1_params),
+            make_equip_data(suit.equip2_params),
+            make_equip_data(suit.equip3_params),
+            make_equip_data(suit.equip4_params),
+            make_equip_data(suit.equip5_params),
+            make_equip_data(suit.equip6_params),
+            make_equip_data(suit.equip7_params),
+        ],
+        DERIVE_FROM=make_derive_from_data(suit),
+        DERIVE_INTO=make_derive_into_data(suit),
+    )
+    return page_title, page_content
