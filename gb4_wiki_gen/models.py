@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from itertools import zip_longest
 from typing import Mapping
 
 from utils import is_sequence
@@ -26,9 +27,10 @@ from utils import is_sequence
 
 
 class UReference:
-    def __init__(self, *, attr: str = None, table: str):
+    def __init__(self, *, attr: str = None, table: str, optional=False):
         self._attr = attr
         self._data_table_key = table
+        self._optional = optional
 
     def __set_name__(self, owner, name):
         if self._attr is None:
@@ -47,8 +49,12 @@ class UReference:
         if key == "None":
             return None
         if is_sequence(key):
-            return [data_table[it] for it in key]
-        return data_table[key]
+            return [
+                data_table.get(it) if self._optional else data_table[key]
+                for it in key
+            ]
+        return data_table.get(key) if self._optional else data_table[key]
+
 
 
 class UReferenceObjectArray:
@@ -189,7 +195,7 @@ class DerivedSynthesizeParameterTable(DataTable):
 
     def init_implicit_recipes_from_parts_sharing(self):
         mslist = self.registry["MSList"]
-        self._recipes = []
+        self._recipes = set()
 
         for item in self:
             if item.target_parts_id not in mslist:
@@ -197,17 +203,18 @@ class DerivedSynthesizeParameterTable(DataTable):
             suit = mslist[item.target_parts_id]
 
             for array_item in item.synthesize_recipe_array:
-                parts_recipes = zip(
+                parts_recipes = list(zip_longest(
                     suit.parts_ids,
                     mslist[array_item["_SrcPartsId1"]].parts_ids,
                     mslist[array_item["_SrcPartsId2"]].parts_ids,
-                )
+                    fillvalue=None
+                ))
                 # looking up the actual parts will generate (invalid) recipes
                 # where parts are shared between suits, exclude those
-                self._recipes.extend(filter(
-                    lambda it: it[0] != it[1] != it[2],
-                    parts_recipes
-                ))
+                self._recipes.update(
+                    it for it in parts_recipes
+                    if None not in it and it[0] != it[1] != it[2]
+                )
 
     def find_derives_from(self, part_id):
         result = set()
@@ -261,6 +268,38 @@ class MissionRewardTable(DataTable):
 
     def mission_by_reward_item(self, item_id) -> list:
         self.reward_item_mapped.get(item_id, [])
+
+
+class ItemGunplaBoxTable(DataTable):
+    def __init__(self, registry, row_type, data):
+        super().__init__(registry, row_type, data)
+        self.init_box_art_id_lookup(data)
+
+    def init_box_art_id_lookup(self, data):
+        self._box_art_id = {}
+        for item in self:
+            self._box_art_id[item.box_art_id] = item
+
+    def find_by_suit_id(self, suit_id):
+        return self._box_art_id.get(f"{suit_id}_")
+
+    def find_by_parts_ids(self, parts_ids):
+        parts_ids = set(parts_ids)
+        results = []
+        for box in self:
+            items_set = set(box.item_array)
+            if items_set.intersection(parts_ids):
+                results.append(box)
+        return results
+
+    def __getitem__(self, item):
+        if isinstance(item, DataMSList):
+            return self.find_by_suit_id(item.id)
+        try:
+            item_id = item.id
+        except Exception:
+            item_id = item
+        return super().__getitem__(item_id)
 
 
 class BaseRowType:
@@ -355,7 +394,7 @@ class DataMSList:
         return (self.head, self.body, self.arm_r, self.arm_l, self.leg, self.backpack)
 
     @property
-    def non_shared_parts_ids(self):
+    def unique_parts_ids(self):
         mstable = self.registry["MSList"]
         return [
             part_id
@@ -383,7 +422,7 @@ class DataMSList:
         localized_series_table = self.registry["localized_text_gundam_series"]
         non_shared_parts = [
             parts_parameter_table[part_id]
-            for part_id in self.non_shared_parts_ids
+            for part_id in self.unique_parts_ids
         ]
         series = set([
             localized_series_table[part.series]._text
@@ -403,7 +442,19 @@ class DataItemGunplaBox:
     gundam_series_name: UField = UField()
     item_array: UField = UField()
 
-    items_parts_parameters: UReference = UReference(attr="_ItemArray", table="PartsParameters")
+    items_parts_parameters: UReference = UReference(attr="_ItemArray", table="PartsParameter", optional=True)
+    items_equip_parameters: UReference = UReference(attr="_ItemArray", table="EquipParameter", optional=True)
+    shop_item: UReference = UReference(attr="_ItemId", table="ShopGoodsTable")
+    gundam_series_name_localized: UReference = UReference(attr="_GundamSeriesName", table="localized_text_gundam_series")
+
+    @property
+    def suit_id(self):
+        return self.box_art_id.rstrip("_")
+
+    @property
+    def name_localized(self):
+        localized = self.registry["localized_text_preset_character_name"]
+        return localized[self.suit_id]._text
 
 
 @dataclass(frozen=True)

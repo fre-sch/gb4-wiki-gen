@@ -1,6 +1,6 @@
 <includeonly>
 <div class="gb4-unit-icon">
-[[ File:GB4_Icon_[=SUIT_NAME|slugify].png|left|frameless]] <span>[[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] ]]</span>
+[[ File:GB4_Icon_Unit_[=SUIT_NAME|slugify].png|left|frameless]] <span>[[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] ]]</span>
 </div>
 </includeonly>
 <noinclude>
@@ -12,19 +12,19 @@
 |GRADE_HG=[=GRADE_HG]
 |GRADE_MG=[=GRADE_MG]
 |GRADE_SD=[=GRADE_SD]
-|IN_SHOP=[=IN_SHOP]
+|IN_SHOP=
 |DERIVE_ONLY=[=DERIVE_ONLY]
-|SHOP_PRICE_HG=[=SHOP_PRICE_HG]
-|SHOP_PRICE_SD=[=SHOP_PRICE_SD]
-|SHOP_PRICE_MG=[=SHOP_PRICE_MG]
+|SHOP_PRICE_HG=[% for box in BOX_HG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
+|SHOP_PRICE_MG=[% for box in BOX_MG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
+|SHOP_PRICE_SD=[% for box in BOX_SG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
 }}
 [=DESCRIPTION]
 
 
 == Part list ==
-[% for icon, part_name, part_skills in PARTS %]
+[% for icon, part_name, part_skills, is_unique in PARTS %]
 === [=icon] ===
-[=part_name]
+[% if is_unique %][=part_name][% else %][[[=WIKI_NAMESPACE]:[=part_name | slugify]]][% endif %]
 [% if part_skills %]
 {| class="wikitable"
 |+
@@ -34,11 +34,11 @@
 [%- for ex, op, awaken in part_skills %]
 |-
 | [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
-[=ex.info][% endif %]
+[=ex.info|fix_tags][% endif %]
 | [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
-[=op.info][% endif %]
+[=op.info|fix_tags][% endif %]
 | [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
-[=awaken.info][% endif %]
+[=awaken.info|fix_tags][% endif %]
 [%- endfor %]
 |}
 [% endif %]
@@ -47,33 +47,31 @@
 
 == Equipment ==
 
+[% for icon, name, part_skills in EQUIP | select() %]
+=== [=name] ===
+
+[%- if part_skills %]
 {| class="wikitable"
 |+
-!Part
 !Normal Skill
 !EX Skill
 !OP Skill
 !Awaken Skill
-[%- for icon, name, part_skills in EQUIP | select() %]
-|-
-| [% if part_skills %]rowspan="[=part_skills|length]" | [% endif %]{{GB4Equip[=icon]}} [=name]
 [%- for normal, ex, op, awaken in part_skills %]
-[% if loop.index > 1 %]|-[% endif %]
+|-
 | [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
-[=normal.info][% endif %]
+[=normal.info|fix_tags][% endif %]
 | [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
-[=ex.info][% endif %]
+[=ex.info|fix_tags][% endif %]
 | [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
-[=ex.info][% endif %]
+[=op.info|fix_tags][% endif %]
 | [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
-[=ex.info][% endif %]
-[% else %]
-|
-|
-|
-[%- endfor %]
+[=awaken.info|fix_tags][% endif %]
 [%- endfor %]
 |}
+[%- endif %]
+[%- endfor %]
+
 
 == Drops ==
 
@@ -96,6 +94,8 @@ Both Unit 1 and Unit 2 can be used as base part to start the derive synthesis.
 | {{ [=WIKI_NAMESPACE]:[=recipe.source2_suit_name | slugify] }}
 [%- endfor %]
 |}
+[%- else %]
+No derives known.
 [%- endfor %]
 
 == Derives into ==

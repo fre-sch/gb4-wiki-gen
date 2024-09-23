@@ -15,8 +15,8 @@ def make_skill_data(part_param: DataPartsParameter):
     for skill_data in part_param.skill_array_data:
         ns, ability_type = skill_data.ability_cartridge_category.split("::")
         item = {
-            "name": skill_data.name_localized._text,
-            "info": skill_data.info_localized._text,
+            "name": skill_data.ui_name_localized,
+            "info": skill_data.ui_info_localized,
             "ability_type": ability_type
         }
         if "ORIGINAL" in ability_type:
@@ -69,14 +69,14 @@ def make_derive_from_data(suit):
     try:
         suit.synthesis
     except DataTableIndexError as e:
-        return []
+        return {}
 
     mslist = suit.registry["MSList"]
     part_param_table = suit.registry["PartsParameter"]
     synthesis_table = suit.registry["DerivedSynthesizeParameter"]
     recipes = {}
 
-    for part_id in suit.non_shared_parts_ids:
+    for part_id in suit.unique_parts_ids:
         part_id = part_id.replace("MG_", "HG_")
         for result_id, source1_id, source2_id in synthesis_table.find_derives_from(part_id):
             part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
@@ -99,7 +99,7 @@ def make_derive_into_data(suit: DataMSList):
     synthesis_table = suit.registry["DerivedSynthesizeParameter"]
     recipes = {}
 
-    for part_id in suit.non_shared_parts_ids:
+    for part_id in suit.unique_parts_ids:
         part_id = part_id.replace("MG_", "HG_")
         for result_id, source1_id, source2_id in synthesis_table.find_derives_into(part_id):
             part_type = part_param_table[result_id].other["_PerformanceGroupName"].replace("Parts", "")
@@ -122,6 +122,29 @@ def make_derive_into_data(suit: DataMSList):
     return recipes
 
 
+def make_box_price(grade, suit):
+    registry = suit.registry
+    boxes_table = registry["ItemGunplaBox"]
+    if not suit.id.startswith(f"{grade}_"):
+        try:
+            gradeless_id = suit.id[3:]
+            grade_suit_id = f"{grade}_{gradeless_id}"
+            suit = registry["MSList"][grade_suit_id]
+        except DataTableIndexError:
+            return []
+    boxes = []
+    for box in boxes_table.find_by_parts_ids(suit.unique_parts_ids):
+        try:
+            boxes.append({
+                "grade": grade,
+                "name": box.name_localized,
+                "price": box.shop_item.price
+            })
+        except DataTableIndexError:
+            pass
+    return boxes
+
+
 def make_suit_page_content(registry, suit_id, wiki_namespace):
     template = template_env.get_template("suit_page.jinja2")
     mslist = registry["MSList"]
@@ -129,6 +152,11 @@ def make_suit_page_content(registry, suit_id, wiki_namespace):
     page_slug = slugify(suit.ms_name_localized._text, separator="_", lowercase=False)
     page_title = f"{wiki_namespace}:{page_slug}"
     grade_hg, grade_mg, grade_sd = mslist.grade_variants(suit)
+    unique_part_ids = suit.unique_parts_ids
+    hg_box_price = make_box_price("HG", suit)
+    mg_box_price = make_box_price("MG", suit)
+    sd_box_price = make_box_price("SD", suit)
+
     page_content = template.render(
         WIKI_NAMESPACE=wiki_namespace,
         SUIT_NAME=suit.ms_name_localized._text,
@@ -137,19 +165,42 @@ def make_suit_page_content(registry, suit_id, wiki_namespace):
         GRADE_HG="HG" if grade_hg else "",
         GRADE_MG="MG" if grade_mg else "",
         GRADE_SD="SD" if grade_sd else "",
+        BOX_HG=hg_box_price,
+        BOX_MG=mg_box_price,
+        BOX_SD=sd_box_price,
+        DERIVE_ONLY=not (hg_box_price or mg_box_price or sd_box_price),
         PARTS=[
-            ("Head", suit.head_part_params.parts_name_localized._text,
-             make_skill_data(suit.head_part_params)),
-            ("Body", suit.body_part_params.parts_name_localized._text,
-             make_skill_data(suit.body_part_params)),
-            ("ArmR", suit.arm_r_part_params.parts_name_localized._text,
-             make_skill_data(suit.arm_r_part_params)),
-            ("ArmL", suit.arm_l_part_params.parts_name_localized._text,
-             make_skill_data(suit.arm_l_part_params)),
-            ("Leg", suit.leg_part_params.parts_name_localized._text,
-             make_skill_data(suit.leg_part_params)),
-            ("Backpack", suit.backpack_part_params.parts_name_localized._text,
-             make_skill_data(suit.backpack_part_params)),
+            (
+                "Head", suit.head_part_params.parts_name_localized._text,
+                make_skill_data(suit.head_part_params),
+                suit.head in unique_part_ids
+            ),
+            (
+                "Body", suit.body_part_params.parts_name_localized._text,
+                make_skill_data(suit.body_part_params),
+                suit.body in unique_part_ids
+            ),
+            (
+                "ArmR", suit.arm_r_part_params.parts_name_localized._text,
+                make_skill_data(suit.arm_r_part_params),
+                suit.arm_r in unique_part_ids,
+            ),
+            (
+                "ArmL", suit.arm_l_part_params.parts_name_localized._text,
+                make_skill_data(suit.arm_l_part_params),
+                suit.arm_l in unique_part_ids,
+            ),
+            (
+                "Leg", suit.leg_part_params.parts_name_localized._text,
+                make_skill_data(suit.leg_part_params),
+                suit.leg in unique_part_ids,
+            ),
+            (
+                "Backpack",
+                suit.backpack_part_params.parts_name_localized._text,
+                make_skill_data(suit.backpack_part_params),
+                suit.backpack in unique_part_ids,
+            ),
         ],
         EQUIP=[
             make_equip_data(suit.equip0_params),

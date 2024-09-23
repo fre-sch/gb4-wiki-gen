@@ -1,0 +1,69 @@
+<includeonly>
+<div class="gb4-kit-icon">
+<span>[[ [=WIKI_NAMESPACE]:Kit_[=KIT_GRADE]_[=KIT_NAME|slugify] | [=KIT_NAME] [=KIT_PRICE] ]]</span>
+</div>
+</includeonly>
+<noinclude>
+= [=KIT_NAME] =
+
+;Price
+:[=KIT_PRICE]
+;Grade
+:[=KIT_GRADE]
+
+== Parts ==
+
+[%- for part_type, part_name, suit_name, part_skills in KIT_PARTS %]
+=== [=part_type] ===
+
+{{[=WIKI_NAMESPACE]:[=suit_name|slugify]}}
+
+[%- if part_skills %]
+{| class="wikitable"
+|+
+!EX Skill
+!OP Skill
+!Awaken Skill
+[%- for ex, op, awaken in part_skills %]
+|-
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info|fix_tags][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=op.info|fix_tags][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=awaken.info|fix_tags][% endif %]
+[%- endfor %]
+|}
+[%- endif %]
+[%- endfor %]
+
+== Equipment ==
+
+[% for part_type, part_name, part_skills in KIT_EQUIP | select() %]
+=== [=part_name] ===
+[%- if part_skills %]
+{| class="wikitable"
+|+
+!Normal Skill
+!EX Skill
+!OP Skill
+!Awaken Skill
+[%- for normal, ex, op, awaken in part_skills %]
+|-
+| [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
+[=normal.info|fix_tags][% endif %]
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info|fix_tags][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=op.info|fix_tags][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=awaken.info|fix_tags][% endif %]
+[%- endfor %]
+|}
+[%- endif %]
+[%- endfor %]
+
+
+[[Category:Gundam Breaker 4]]
+[[Category:[=SERIES]]]
+</noinclude>

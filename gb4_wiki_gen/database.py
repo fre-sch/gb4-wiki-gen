@@ -7,7 +7,7 @@ import argparse
 from models import DataTable, BaseRowType, \
     DataMSList, DataItemGunplaBox, DataPartsParameter, DataSkillIdInfoData, \
     DataEquipParameter, MissionRewardTable, MSListTable, \
-    DerivedSynthesizeParameterTable
+    DerivedSynthesizeParameterTable, ItemGunplaBoxTable
 
 data_sources = {
     "GB4/Content/Text/en/Common/localized_text_ability_cartridge_name.json": (
@@ -74,7 +74,7 @@ data_sources = {
         DataPartsParameter,
     ),
     "GB4/Content/Data/Item/ItemGunplaBox.json": (
-        DataItemGunplaBox,
+        DataItemGunplaBox, ItemGunplaBoxTable
     ),
     "GB4/Content/Data/Skill/SkillIdInfo.json": (
         DataSkillIdInfoData,
@@ -88,6 +88,9 @@ data_sources = {
     "GB4/Content/Data/Synthesize/DerivedSynthesizeParameter.json": (
         BaseRowType, DerivedSynthesizeParameterTable
     ),
+    "GB4/Content/Data/UI/Menu/ShopGoodsTable.json": (
+        BaseRowType,
+    )
 }
 
 
