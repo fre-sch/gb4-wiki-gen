@@ -1,6 +1,6 @@
-from models import DataEquipParameter, DataTableIndexError
-from templates import template_env
-from utils import slugify
+from gb4_wiki_gen.models import DataEquipParameter, DataTableIndexError
+from gb4_wiki_gen.templates import template_env
+from gb4_wiki_gen.utils import slugify
 
 
 def collect_equipment(registry):

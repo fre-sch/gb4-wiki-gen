@@ -1,7 +1,7 @@
-from templates import template_env
 from slugify import slugify
+from gb4_wiki_gen.templates import template_env
 from gb4_wiki_gen.generator.suit_page import make_part_skill_data
-from generator.equip_page import make_equip_data
+from gb4_wiki_gen.generator.equip_page import make_equip_data
 
 
 def make_kit_page_content(registry, kit_id, wiki_namespace):

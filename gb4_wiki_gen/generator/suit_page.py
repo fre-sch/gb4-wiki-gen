@@ -1,8 +1,8 @@
 from slugify import slugify
 
-from models import DataTableIndexError, DataPartsParameter, \
+from gb4_wiki_gen.models import DataTableIndexError, DataPartsParameter, \
     DataMSList
-from templates import template_env
+from gb4_wiki_gen.templates import template_env
 
 
 def make_part_skill_data(part_param: DataPartsParameter):

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from itertools import zip_longest
 from typing import Mapping, Iterable
 
-from utils import is_sequence
+from gb4_wiki_gen.utils import is_sequence
 
 
 class UReference:

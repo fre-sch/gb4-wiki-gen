@@ -4,15 +4,15 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
 from pprint import pprint
-
-from gb4_wiki_gen.database import load_data
 import click
 
-from generator.equip_page import collect_equipment, make_equip_page_content
-from generator.kit_page import make_kit_page_content
-from generator.suit_page import make_suit_page_content
-from models import DataTableIndexError
-from wiki_client import ApiSession
+
+from gb4_wiki_gen.database import load_data
+from gb4_wiki_gen.generator.equip_page import collect_equipment, make_equip_page_content
+from gb4_wiki_gen.generator.kit_page import make_kit_page_content
+from gb4_wiki_gen.generator.suit_page import make_suit_page_content
+from gb4_wiki_gen.models import DataTableIndexError
+from gb4_wiki_gen.wiki_client import ApiSession
 from gb4_wiki_gen.utils import slugify
 
 
@@ -33,6 +33,9 @@ def main(context, dir_path):
 @click.argument("part_id")
 @click.pass_context
 def derives_into(context, part_id):
+    """
+    (debug) information about derives
+    """
     registry = context.obj["registry"]
     derive_table = registry["DerivedSynthesizeParameter"]
     part_name_table = registry["localized_text_parts_name"]
@@ -52,17 +55,22 @@ def derives_into(context, part_id):
 @main.command()
 @click.pass_context
 def suits_grades(context):
+    """
+    (debug) suit grades
+    """
     registry = context.obj["registry"]
     mslist = registry["MSList"]
     for suit in mslist:
         grades = mslist.grade_variants(suit)
-        if not grades[0] and grades[1]:
-            print(suit.id)
+        print(f"{suit.id}, {grades}")
 
 
 @main.command()
 @click.pass_context
 def suits_localized(context):
+    """
+    (debug) info on suits (main id, parts ids, gunpla box)
+    """
     registry = context.obj["registry"]
     boxes = registry["ItemGunplaBox"]
     for suit in registry["MSList"]:
@@ -87,6 +95,9 @@ def suits_localized(context):
 @main.command()
 @click.pass_context
 def missions(context):
+    """
+    (debug) attempt to resolve mission part drops
+    """
     registry = context.obj["registry"]
     mission_list_table = registry["MissionListTable"]
     operations = {}
@@ -99,6 +110,9 @@ def missions(context):
 @main.command()
 @click.pass_context
 def mission_rewards(context):
+    """
+    (incomplete) generate mission pages with drops
+    """
     registry = context.obj["registry"]
     mission_reward_table = registry["MissionRewardTable"]
     suit_names = registry["localized_text_preset_character_name"]
@@ -148,6 +162,9 @@ def mission_rewards(context):
 @click.option("--wiki-namespace", type=str, default="Generated")
 @click.pass_context
 def suit(context, suit_id, upload, dump, wiki_namespace):
+    """
+    generate mediawiki page for selected suit_ids or `all`, with optional upload
+    """
     if not suit_id:
         return
 
@@ -193,6 +210,9 @@ def suit(context, suit_id, upload, dump, wiki_namespace):
 @click.option("--wiki-namespace", type=str, default="Generated")
 @click.pass_context
 def kit(context, kit_id, upload, dump, wiki_namespace):
+    """
+    generate mediawiki page for selected kit_ids or `all`, with optional upload
+    """
     if not kit_id:
         return
 
@@ -240,6 +260,9 @@ def kit(context, kit_id, upload, dump, wiki_namespace):
 @click.option("--wiki-namespace", type=str, default="Generated")
 @click.pass_context
 def series(context, upload, wiki_namespace):
+    """
+    generate mediawiki category pages for series, with optional upload
+    """
     registry = context.obj["registry"]
     pages = []
 
@@ -277,6 +300,9 @@ def series(context, upload, wiki_namespace):
 @click.option("--wiki-namespace", type=str, default="Generated")
 @click.pass_context
 def equipment(context, upload, dump, wiki_namespace):
+    """
+    generate mediawiki pages for all equipment, with optional upload
+    """
     registry = context.obj["registry"]
 
     def try_make_pages(registry, wiki_namespace):

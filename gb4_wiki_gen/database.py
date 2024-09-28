@@ -4,7 +4,7 @@ from pathlib import Path
 
 import argparse
 
-from models import DataTable, BaseRowType, \
+from gb4_wiki_gen.models import DataTable, BaseRowType, \
     DataMSList, DataItemGunplaBox, DataPartsParameter, DataSkillIdInfoData, \
     DataEquipParameter, MissionRewardTable, MSListTable, \
     DerivedSynthesizeParameterTable, ItemGunplaBoxTable
