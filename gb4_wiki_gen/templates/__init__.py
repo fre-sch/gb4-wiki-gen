@@ -1,7 +1,9 @@
-from functools import partial
 import re
+from functools import partial
+from itertools import zip_longest
+
 import jinja2
-from slugify import slugify
+from gb4_wiki_gen.utils import slugify
 
 
 template_env = jinja2.Environment(
@@ -13,7 +15,7 @@ template_env = jinja2.Environment(
     comment_start_string="[#",
     comment_end_string="#]",
 )
-template_env.filters["slugify"] = partial(slugify, separator="_", lowercase=False)
+template_env.filters["slugify"] = slugify
 
 
 def fix_tags(value):
@@ -27,7 +29,15 @@ def fix_tags(value):
     pattern = r"<(SkillInfo[^>]+)>"
     replace = r'<span class="gb4-localized-\1"></span>'
     value = re.sub(pattern, replace ,value, flags=re.MULTILINE)
+
+    value = re.sub(r"[^\w<>]+$", "", value)
     return value
 
 
 template_env.filters["fix_tags"] = fix_tags
+
+
+def tabulate(value):
+    return zip_longest(*value, fillvalue=None)
+
+template_env.filters["tabulate"] = tabulate

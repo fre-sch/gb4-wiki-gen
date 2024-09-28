@@ -1,6 +1,7 @@
 from templates import template_env
 from slugify import slugify
-from gb4_wiki_gen.generator.suit_page import make_skill_data, make_equip_data
+from gb4_wiki_gen.generator.suit_page import make_part_skill_data
+from generator.equip_page import make_equip_data
 
 
 def make_kit_page_content(registry, kit_id, wiki_namespace):
@@ -33,7 +34,7 @@ def make_kit_parts(kit):
         suit = kit.registry["MSList"].primary_suit_by_part_id(part)
         suit_name = suit.ms_name_localized._text
         parts.append(
-            (part_type, part_name, suit_name, make_skill_data(part))
+            (part_type, part_name, suit_name, make_part_skill_data(part))
         )
     return parts
 

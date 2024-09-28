@@ -1,29 +1,9 @@
 import re
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import Mapping
+from typing import Mapping, Iterable
 
 from utils import is_sequence
-
-
-# class ReferenceResolver:
-#     def __init__(self, registry, value, value_type=None):
-#         self.registry = registry
-#         self.value = value
-#         self.value_type = value_type
-#
-#     def __getattr__(self, item) -> "DataTable":
-#         data_table = self.registry[item]
-#         return data_table[self.value]
-#
-#     def __iter__(self):
-#         return iter(
-#             ReferenceResolver(self.registry, it)
-#             for it in self.value
-#         )
-#
-#     def __str__(self):
-#         return str(self.value)
 
 
 class UReference:
@@ -75,6 +55,7 @@ class UReferenceObjectArray:
         return [
             data_table[it[item_key]]
             for it in obj_data
+            if it[item_key] in data_table
         ]
 
 
@@ -378,16 +359,20 @@ class DataMSList:
     leg_part_params: UReference = UReference(attr="_leg", table="PartsParameter")
     backpack_part_params: UReference = UReference(attr="_backpack", table="PartsParameter")
 
-    equip0_params: UReference = UReference(attr="_equip0", table="EquipParameter")
-    equip1_params: UReference = UReference(attr="_equip1", table="EquipParameter")
-    equip2_params: UReference = UReference(attr="_equip2", table="EquipParameter")
-    equip3_params: UReference = UReference(attr="_equip3", table="EquipParameter")
-    equip4_params: UReference = UReference(attr="_equip4", table="EquipParameter")
-    equip5_params: UReference = UReference(attr="_equip5", table="EquipParameter")
-    equip6_params: UReference = UReference(attr="_equip6", table="EquipParameter")
-    equip7_params: UReference = UReference(attr="_equip7", table="EquipParameter")
+    equip0_params: UReference = UReference(attr="_equip0", table="EquipParameter", optional=True)
+    equip1_params: UReference = UReference(attr="_equip1", table="EquipParameter", optional=True)
+    equip2_params: UReference = UReference(attr="_equip2", table="EquipParameter", optional=True)
+    equip3_params: UReference = UReference(attr="_equip3", table="EquipParameter", optional=True)
+    equip4_params: UReference = UReference(attr="_equip4", table="EquipParameter", optional=True)
+    equip5_params: UReference = UReference(attr="_equip5", table="EquipParameter", optional=True)
+    equip6_params: UReference = UReference(attr="_equip6", table="EquipParameter", optional=True)
+    equip7_params: UReference = UReference(attr="_equip7", table="EquipParameter", optional=True)
 
     synthesis: UReference = UReference(attr="id", table="DerivedSynthesizeParameter")
+
+    @property
+    def gradeless_id(self):
+        return self.id[3:]
 
     @property
     def parts_ids(self):
@@ -399,7 +384,7 @@ class DataMSList:
         return [
             part_id
             for part_id in self.parts_ids
-            if mstable.primary_suit_by_part_id(part_id).id == self.id
+            if part_id is not None and mstable.primary_suit_by_part_id(part_id).id == self.id
         ]
 
     @property
@@ -412,6 +397,19 @@ class DataMSList:
             ("leg", self.leg_part_params),
             ("backpack", self.backpack_part_params),
         )
+
+    @property
+    def equip_params(self) -> list["DataEquipParameter"]:
+        return list(filter(None, [
+            self.equip0_params,
+            self.equip1_params,
+            self.equip2_params,
+            self.equip3_params,
+            self.equip4_params,
+            self.equip5_params,
+            self.equip6_params,
+            self.equip7_params,
+        ]))
 
     def has_part(self, part_id):
         return part_id in self.parts_ids
@@ -450,6 +448,10 @@ class DataItemGunplaBox:
     @property
     def suit_id(self):
         return self.box_art_id.rstrip("_")
+
+    @property
+    def gradeless_suit_id(self):
+        return self.box_art_id[3:].rstrip("_")
 
     @property
     def name_localized(self):
@@ -506,8 +508,8 @@ class DataSkillIdInfoData:
     attack_data_id_for_parameter_display: UField = UField()
     hyper_trance_id: UField = UField()
 
-    name_localized: UReference = UReference(attr="id", table="localized_text_skill_name")
-    info_localized: UReference = UReference(attr="id", table="localized_text_skill_info")
+    name_localized: UReference = UReference(attr="id", table="localized_text_skill_name", optional=True)
+    info_localized: UReference = UReference(attr="id", table="localized_text_skill_info", optional=True)
 
     ui_info_array_data: UReferenceObjectArray = UReferenceObjectArray(
         attr=("_UiInfoArray", "_TextId"), table="localized_text_skill_name"
@@ -519,7 +521,7 @@ class DataSkillIdInfoData:
             t = self.registry["localized_text_skill_name"]
             for item in self.ui_info_array:
                 return t[item["_TextId"]]._text
-        except Exception:
+        except (DataTableIndexError, AttributeError):
             return None
 
     @property
@@ -528,7 +530,7 @@ class DataSkillIdInfoData:
             t = self.registry["localized_text_skill_info"]
             for item in self.ui_info_array:
                 return t[item["_TextId"]]._text
-        except Exception:
+        except (DataTableIndexError, AttributeError):
             return None
 
 
@@ -570,7 +572,7 @@ class DataEquipParameter:
     def name_localized(self):
         if self.parts_category == "MS_EQUIP_CATEGORY::SHIELD":
             t = self.registry["localized_text_shield_name"]
-            return t[self.parts_name]
+            return t[self.parts_name]._text
         else:
             t = self.registry["localized_text_weapon_name"]
-            return t[self.parts_name]
+            return t[self.parts_name]._text

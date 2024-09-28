@@ -1,13 +1,11 @@
-from itertools import zip_longest
-
 from slugify import slugify
 
-from models import DataTableIndexError, DataEquipParameter, DataPartsParameter, \
+from models import DataTableIndexError, DataPartsParameter, \
     DataMSList
 from templates import template_env
 
 
-def make_skill_data(part_param: DataPartsParameter):
+def make_part_skill_data(part_param: DataPartsParameter):
     ex_skills = []
     op_skills = []
     awaken_skills = []
@@ -27,42 +25,9 @@ def make_skill_data(part_param: DataPartsParameter):
 
         elif "OP" in ability_type:
             op_skills.append(item)
-
-    return list(zip_longest(ex_skills, op_skills, awaken_skills, fillvalue=None))
-
-
-def make_equip_data(equip_params: DataEquipParameter):
-    if equip_params is None:
-        return None
-
-    normal_skills = []
-    ex_skills = []
-    op_skills = []
-    awaken_skills = []
-
-    for skill_data in equip_params.skill_array_data:
-        ns, ability_type = skill_data.ability_cartridge_category.split("::")
-        item = {
-            "name": skill_data.ui_name_localized,
-            "info": skill_data.ui_info_localized,
-            "ability_type": ability_type,
-        }
-        if "NML_" in ability_type:
-            normal_skills.append(item)
-
-        elif "EX" in ability_type:
-            ex_skills.append(item)
-
-        elif "OP" in ability_type:
-            op_skills.append(item)
-
-        elif "ORIGINAL" in ability_type:
-            awaken_skills.append(item)
-
-    ns, equip_type = equip_params.parts_category.split("::")
-    equip_name = equip_params.name_localized._text
-
-    return equip_type, equip_name, list(zip_longest(normal_skills, ex_skills, op_skills, awaken_skills, fillvalue=None))
+    if ex_skills or op_skills or awaken_skills:
+        return ex_skills, op_skills, awaken_skills
+    return None
 
 
 def make_derive_from_data(suit):
@@ -133,7 +98,8 @@ def make_box_price(grade, suit):
         except DataTableIndexError:
             return []
     boxes = []
-    for box in boxes_table.find_by_parts_ids(suit.unique_parts_ids):
+    unique_parts_ids = suit.unique_parts_ids
+    for box in boxes_table.find_by_parts_ids(unique_parts_ids):
         try:
             boxes.append({
                 "grade": grade,
@@ -170,49 +136,29 @@ def make_suit_page_content(registry, suit_id, wiki_namespace):
         BOX_SD=sd_box_price,
         DERIVE_ONLY=not (hg_box_price or mg_box_price or sd_box_price),
         PARTS=[
-            (
-                "Head", suit.head_part_params.parts_name_localized._text,
-                make_skill_data(suit.head_part_params),
-                suit.head in unique_part_ids
-            ),
-            (
-                "Body", suit.body_part_params.parts_name_localized._text,
-                make_skill_data(suit.body_part_params),
-                suit.body in unique_part_ids
-            ),
-            (
-                "ArmR", suit.arm_r_part_params.parts_name_localized._text,
-                make_skill_data(suit.arm_r_part_params),
-                suit.arm_r in unique_part_ids,
-            ),
-            (
-                "ArmL", suit.arm_l_part_params.parts_name_localized._text,
-                make_skill_data(suit.arm_l_part_params),
-                suit.arm_l in unique_part_ids,
-            ),
-            (
-                "Leg", suit.leg_part_params.parts_name_localized._text,
-                make_skill_data(suit.leg_part_params),
-                suit.leg in unique_part_ids,
-            ),
-            (
-                "Backpack",
-                suit.backpack_part_params.parts_name_localized._text,
-                make_skill_data(suit.backpack_part_params),
-                suit.backpack in unique_part_ids,
-            ),
+            make_part_data("Head", suit.head, suit.head_part_params, unique_part_ids),
+            make_part_data("Body", suit.body, suit.body_part_params, unique_part_ids),
+            make_part_data("ArmR", suit.arm_r, suit.arm_r_part_params, unique_part_ids,),
+            make_part_data("ArmL", suit.arm_l, suit.arm_l_part_params, unique_part_ids),
+            make_part_data("Leg", suit.leg, suit.leg_part_params, unique_part_ids),
+            make_part_data("Backpack", suit.backpack, suit.backpack_part_params, unique_part_ids),
         ],
         EQUIP=[
-            make_equip_data(suit.equip0_params),
-            make_equip_data(suit.equip1_params),
-            make_equip_data(suit.equip2_params),
-            make_equip_data(suit.equip3_params),
-            make_equip_data(suit.equip4_params),
-            make_equip_data(suit.equip5_params),
-            make_equip_data(suit.equip6_params),
-            make_equip_data(suit.equip7_params),
+            equip.name_localized
+            for equip in suit.equip_params
         ],
         DERIVE_FROM=make_derive_from_data(suit),
         DERIVE_INTO=make_derive_into_data(suit),
     )
     return page_title, page_content
+
+
+def make_part_data(part_type, part, part_params, unique_part_ids):
+    if part is None:
+        return None
+    return (
+        part_type,
+        part_params.parts_name_localized._text,
+        make_part_skill_data(part_params),
+        part in unique_part_ids,
+    )

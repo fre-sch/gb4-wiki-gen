@@ -1,28 +1,27 @@
 <includeonly>
-<div class="gb4-unit-icon">
+<div class="gb4-unit-include">
 [[ File:GB4_Icon_Unit_[=SUIT_NAME|slugify].png|left|frameless]] <span>[[ [=WIKI_NAMESPACE]:[=SUIT_NAME|slugify] | [=SUIT_NAME] ]]</span>
 </div>
 </includeonly>
 <noinclude>
-= [=SUIT_NAME] - [=SUIT_NUMBER] =
-{{GB4KitInfo
-|KITNAME_EN=[=SUIT_NAME] - [=SUIT_NUMBER]
-|MAIN_IMAGE=Main image
-|SERIES_NAME={{GB4Series_[=SERIES|slugify]}}
+{{GB4SuitInfo
+|SUIT_NAME=[=SUIT_NAME]
+|SUIT_NUMBER=[=SUIT_NUMBER]
+|MAIN_IMAGE=[[ File:GB4_[=SUIT_NAME|slugify]_Main.png ]]
+|SERIES={{GB4Series_[=SERIES|slugify]}}
 |GRADE_HG=[=GRADE_HG]
 |GRADE_MG=[=GRADE_MG]
 |GRADE_SD=[=GRADE_SD]
-|IN_SHOP=
+|SHOP_PRICE_HG=[% for box in BOX_HG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}[% endfor %]
+|SHOP_PRICE_MG=[% for box in BOX_MG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}[% endfor %]
+|SHOP_PRICE_SD=[% for box in BOX_SG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}[% endfor %]
 |DERIVE_ONLY=[=DERIVE_ONLY]
-|SHOP_PRICE_HG=[% for box in BOX_HG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
-|SHOP_PRICE_MG=[% for box in BOX_MG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
-|SHOP_PRICE_SD=[% for box in BOX_SG %]{{[=WIKI_NAMESPACE]:Kit_[=box.grade]_[=box.name|slugify]}}<br>[% endfor %]
 }}
+= [=SUIT_NAME] - [=SUIT_NUMBER] =
 [=DESCRIPTION]
 
-
 == Part list ==
-[% for icon, part_name, part_skills, is_unique in PARTS %]
+[% for icon, part_name, part_skills, is_unique in PARTS | select() %]
 === [=icon] ===
 [% if is_unique %][=part_name][% else %][[[=WIKI_NAMESPACE]:[=part_name | slugify]]][% endif %]
 [% if part_skills %]
@@ -31,7 +30,7 @@
 !EX Skill
 !OP Skill
 !Awaken Skill
-[%- for ex, op, awaken in part_skills %]
+[%- for ex, op, awaken in part_skills|tabulate %]
 |-
 | [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
 [=ex.info|fix_tags][% endif %]
@@ -46,31 +45,10 @@
 
 
 == Equipment ==
-
-[% for icon, name, part_skills in EQUIP | select() %]
+[% for name in EQUIP %]
 === [=name] ===
-
-[%- if part_skills %]
-{| class="wikitable"
-|+
-!Normal Skill
-!EX Skill
-!OP Skill
-!Awaken Skill
-[%- for normal, ex, op, awaken in part_skills %]
-|-
-| [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
-[=normal.info|fix_tags][% endif %]
-| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
-[=ex.info|fix_tags][% endif %]
-| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
-[=op.info|fix_tags][% endif %]
-| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
-[=awaken.info|fix_tags][% endif %]
-[%- endfor %]
-|}
-[%- endif %]
-[%- endfor %]
+{{[=WIKI_NAMESPACE]:[=name|slugify]}}
+[% endfor %]
 
 
 == Drops ==
@@ -98,6 +76,7 @@ Both Unit 1 and Unit 2 can be used as base part to start the derive synthesis.
 No derives known.
 [%- endfor %]
 
+
 == Derives into ==
 
 [%- for part_type, recipes in DERIVE_INTO.items() %]
@@ -116,6 +95,9 @@ No derives known.
 |}
 [% endfor %]
 
+{{GB4SuitPageFooter}}
+
 [[Category:Gundam Breaker 4]]
+[[Category:GB4_Suit]]
 [[Category:[=SERIES]]]
 </noinclude>

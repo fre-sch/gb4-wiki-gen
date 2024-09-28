@@ -1,0 +1,69 @@
+<includeonly>
+<div class="gb4-equip-include">
+[[ File:GB4_Icon_Equip_[=EQUIP_NAME|slugify].png|left|frameless]] <span>[[[=PAGE_SLUG]|[=EQUIP_NAME]]]</span>
+{| class="wikitable"
+|+
+!Normal Skill
+!EX Skill
+!OP Skill
+!Awaken Skill
+[%- for normal, ex, op, awaken in EQUIP_SKILLS|tabulate %]
+|-
+| [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
+[=normal.info|fix_tags][% endif %]
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info|fix_tags][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=op.info|fix_tags][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=awaken.info|fix_tags][% endif %]
+[%- endfor %]
+|}
+</div>
+</includeonly>
+<noinclude>
+= [=EQUIP_NAME] =
+
+== Abilities ==
+{| class="wikitable"
+|+
+!Normal Skill
+!EX Skill
+!OP Skill
+!Awaken Skill
+[%- for normal, ex, op, awaken in EQUIP_SKILLS|tabulate %]
+|-
+| [% if normal %]{{GB4AbilityType_[=normal.ability_type]}} '''[=normal.name]'''
+[=normal.info|fix_tags][% endif %]
+| [% if ex %]{{GB4AbilityType_[=ex.ability_type]}} '''[=ex.name]'''
+[=ex.info|fix_tags][% endif %]
+| [% if op %]{{GB4AbilityType_[=op.ability_type]}} '''[=op.name]'''
+[=op.info|fix_tags][% endif %]
+| [% if awaken %]{{GB4AbilityType_[=awaken.ability_type]}} '''[=awaken.name]'''
+[=awaken.info|fix_tags][% endif %]
+[%- endfor %]
+|}
+
+[% if SUITS %]
+== Suits containing [=EQUIP_NAME] ==
+[% for id, suit_name in SUITS.items() %]
+* [[[=WIKI_NAMESPACE]:[=suit_name|slugify]]]
+[%- endfor %]
+[% endif %]
+[% if KITS %]
+== Kits containing [=EQUIP_NAME] ==
+[% for id, (kit_grade, kit_name) in KITS.items() %]
+* [[[=WIKI_NAMESPACE]:Kit_[=kit_grade]_[=kit_name|slugify]]]
+[%- endfor %]
+[% endif %]
+
+[[Category:Gundam Breaker 4]]
+[[Category:GB4 Equipment]]
+[% if CATEGORY_WITH_EX %][[Category:GB4 Equipment EX]]
+[% endif -%]
+[% if CATEGORY_WITH_OP %][[Category:GB4 Equipment OP]]
+[% endif -%]
+[% if CATEGORY_WITH_AWAKEN %][[Category:GB4 Equipment Awaken]]
+[% endif -%]
+[[Category:GB4 [=EQUIP_TYPE|title]]]
+</noinclude>
